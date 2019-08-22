@@ -3,3 +3,16 @@ class Blockchain(object):
         self.chain = []
         self.current_transactions = []
 
+    def new_block(self):
+        pass
+    
+    def new_transaction(sel):
+        pass
+
+    @staticmethod
+    def hash(block):
+        pass
+
+    @property
+    def last_block(self):
+        pass
