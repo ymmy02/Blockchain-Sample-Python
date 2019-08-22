@@ -6,7 +6,7 @@ class Blockchain(object):
     def new_block(self):
         pass
     
-    def new_transaction(sel):
+    def new_transaction(self):
         pass
 
     @staticmethod
