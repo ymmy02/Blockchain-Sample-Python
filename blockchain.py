@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import List, Dict
 import hashlib
 import json
 from time import time
@@ -6,6 +6,8 @@ from uuid import uuid4
 from urllib.parse import urlparse
 
 from flask import Flask, jsonify, request
+
+import requests
 
 class Blockchain(object):
     def __init__(self):
@@ -82,10 +84,97 @@ class Blockchain(object):
 
         return guess_hash[:4] == "0000"
 
+    def valid_chain(self, chain: List[object]) -> bool:
+        """
+        Validate the Blockchain
+        :param chain: Blockchain
+        :return: True or False
+        """
+        last_block = chain[0]
+        current_index = 1
+
+        while current_index < len(chain):
+            block = chain[current_index]
+            print(f'{last_block}')
+            print(f'{block}')
+            print(f'\n----------------\n')
+
+            if block['previous_hash'] != self.hash(last_block):
+                return False
+
+            if not self.valid_proof(last_block['proof'], block['proof']):
+                return False
+
+            last_block = block
+            current_index += 1
+
+        return True
+
+    def resolve_conflicts(self) -> bool:
+        """
+        Consensus Algorithm
+        """
+
+        neighbours = self.nodes
+        new_chain = None
+
+        max_length = len(self.chain)
+
+        for node in neighbours:
+            response = requests.get(f'http://{node}/chain')
+
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.json()['chain']
+
+                if length > max_length and self.valid_chain(chain):
+                    max_length = length
+                    new_chain = chain
+
+        if new_chain:
+            self.chian = new_chain
+            return True
+
+        return False
+
 
 app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 blockchain = Blockchain()
+
+@app.route('/nodes/register', methods=['POST'])
+def register_node():
+    values = request.get_json()
+
+    nodes = values.get('nodes')
+    if nodes is None:
+        return 'Error: Invalid Node List', 400
+
+    for node in nodes:
+        blockchain.register_node(node)
+
+    response = {
+        'message': 'Add New Node',
+        'total_nodes': list(blockchain.nodes),
+    }
+    return jsonify(response), 201
+
+@app.route('/nodes/resolve', methods=['GET'])
+def consensus():
+    replaced = blockchain.resolve_conflicts()
+
+    if replaced:
+        response = {
+            'message': 'Chain was replaced',
+            'new_chain': blockchain.chain
+        }
+    else:
+        response = {
+            'message': 'Chain was confirmed',
+            'new_chain': blockchain.chain
+        }
+    
+    return jsonify(response), 200
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transactions():
