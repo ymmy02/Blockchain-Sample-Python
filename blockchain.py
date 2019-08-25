@@ -80,7 +80,15 @@ blockchain = Blockchain()
 
 @app.route('/transactions/new', methods=['POST'])
 def new_transactions():
-    return 'Add New Transaction'
+    values = request.get_json()
+    required = ['sender', 'recipient', 'amount']
+    if not all(k in values for k in required):
+        return 'Missing values', 400
+
+    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amounto'])
+
+    response = {'message': f'Transaction was added to Block {index}'}
+    return jsonify(response), 201
 
 @app.route('/mine', methods=['GET'])
 def mine():
