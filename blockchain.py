@@ -41,9 +41,15 @@ class Blockchain(object):
         return self.last_block['index'] + 1
 
     @staticmethod
-    def hash(block):
-        pass
+    def hash(block: Dict) -> str:
+        """
+        Make the hash of Block by SHA-256
+        :param block: Block
+        :return: str
+        """
+        block_string = json.dumps(block, sort_keys=True).encode()
+        return hashlib.sha256(block_string).hexdigest()
 
     @property
     def last_block(self):
-        pass
+        return self.chain[-1]
