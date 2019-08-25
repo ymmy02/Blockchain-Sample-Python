@@ -11,6 +11,9 @@ class Blockchain(object):
         self.chain = []
         self.current_transactions = []
 
+        # Genesis Block
+        self.new_block(previous_hash=1, proof=100)
+
     def new_block(self, proof: int, previous_hash: str=None) -> Dict:
         """
         :param proof: Proof from the proof of work algorithm
@@ -92,7 +95,26 @@ def new_transactions():
 
 @app.route('/mine', methods=['GET'])
 def mine():
-    return 'Mine New Block'
+    last_block = blockchain.last_block
+    last_proof = last_block['proof']
+    proof = blockchain.proof_of_work(last_proof)
+
+    blockchain.new_transaction(
+        sender="0",
+        recipient=node_identifier,
+        amount=1,
+    )
+
+    block = blockchain.new_block(proof)
+
+    response = {
+        'message': 'Mine New Block',
+        'index': block['index'],
+        'transactions': block['transactions'],
+        'proof': block['proof'],
+        'previous_hash': block['previous_hash'],
+    }
+    return jsonify(response), 200
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
