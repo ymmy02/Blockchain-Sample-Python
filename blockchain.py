@@ -3,16 +3,22 @@ import hashlib
 import json
 from time import time
 from uuid import uuid4
+from urllib.parse import urlparse
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
+        self.nodes = set()
 
         # Genesis Block
         self.new_block(previous_hash=1, proof=100)
+
+    def register_node(self, address: str) -> None:
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
 
     def new_block(self, proof: int, previous_hash: str=None) -> Dict:
         """
@@ -88,7 +94,7 @@ def new_transactions():
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amounto'])
+    index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
 
     response = {'message': f'Transaction was added to Block {index}'}
     return jsonify(response), 201
